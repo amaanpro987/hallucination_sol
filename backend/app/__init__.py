@@ -1,0 +1,3 @@
+"""
+DataForge HallucinationAuditor – backend package.
+"""

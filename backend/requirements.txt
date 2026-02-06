@@ -1,0 +1,40 @@
+# FastAPI + server
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+python-multipart==0.0.18
+
+pydantic-settings==2.7.0
+
+# Database
+sqlalchemy==2.0.36
+aiosqlite==0.20.0
+greenlet>=3.0.0
+
+# PDF parsing
+PyMuPDF==1.25.1
+pdfplumber==0.11.4
+
+# NLP / ML
+sentence-transformers==3.3.1
+transformers==4.47.1
+torch>=2.6.0
+scikit-learn==1.6.0
+
+# BM25 retrieval
+rank-bm25==0.2.2
+
+# FAISS vector index
+faiss-cpu>=1.9.0
+
+# NLI
+scipy>=1.14.1
+numpy>=1.26.4
+
+# Utilities
+spacy>=3.8.3
+nltk>=3.9.1
+pydantic==2.10.3
+python-dateutil==2.9.0.post0
+regex==2024.11.6
+aiofiles==24.1.0
+httpx==0.28.1
