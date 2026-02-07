@@ -85,6 +85,7 @@ class VerificationRun(Base):
     faithfulness = Column(Float, nullable=True)
     groundedness = Column(Float, nullable=True)
     status = Column(String, default="pending")       # pending | running | done | failed
+    performance_metrics = Column(JSON, nullable=True)  # timing breakdown per stage
     created_at = Column(DateTime, default=dt.datetime.utcnow)
     finished_at = Column(DateTime, nullable=True)
 

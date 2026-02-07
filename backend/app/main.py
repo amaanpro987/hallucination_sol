@@ -11,7 +11,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import get_settings
 from app.database import init_db
-from app.routers import sources, verify, runs
+from app.routers import sources, verify, runs, evaluation
 from app.services.ingestion import load_indexes
 
 logging.basicConfig(
@@ -62,6 +62,7 @@ app.add_middleware(
 app.include_router(sources.router)
 app.include_router(verify.router)
 app.include_router(runs.router)
+app.include_router(evaluation.router)
 
 
 @app.get("/health")

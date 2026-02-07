@@ -15,6 +15,7 @@ from __future__ import annotations
 import asyncio
 import datetime as dt
 import logging
+import time
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -31,6 +32,9 @@ log = logging.getLogger(__name__)
 
 async def run_verification(run_id: str):
     """Execute full pipeline for a verification run."""
+    start_time = time.time()
+    perf_metrics = {}
+    
     async with async_session() as db:
         run: VerificationRun = await db.get(VerificationRun, run_id)
         if not run:
@@ -42,24 +46,36 @@ async def run_verification(run_id: str):
 
         try:
             # 1. Claim decomposition
+            t0 = time.time()
             claims = await asyncio.to_thread(decompose_claims, run.llm_output)
+            perf_metrics["decomposition_sec"] = round(time.time() - t0, 3)
 
             all_labels: list[str] = []
             all_weights: list[float] = []
             all_types: list[str] = []
+            
+            retrieval_times = []
+            verification_times = []
+            citation_times = []
+            correction_times = []
 
             for claim in claims:
                 # 2. Evidence retrieval
+                t0 = time.time()
                 evidences = await asyncio.to_thread(
                     retrieve_evidence, claim.claim_text
                 )
+                retrieval_times.append(time.time() - t0)
 
                 # 3. Verification
+                t0 = time.time()
                 vresult = await asyncio.to_thread(
                     verify_claim, claim.claim_text, claim.claim_type, evidences
                 )
+                verification_times.append(time.time() - t0)
 
                 # 4. Citation grounding
+                t0 = time.time()
                 ev_dicts = []
                 for ev in evidences[:3]:
                     cit = ground_citation(claim.claim_text, ev, vresult.nli_scores)
@@ -73,8 +89,10 @@ async def run_verification(run_id: str):
                         "retrieval_score": round(cit.retrieval_score, 3),
                         "nli": cit.nli,
                     })
+                citation_times.append(time.time() - t0)
 
                 # 5. Correction for Red
+                t0 = time.time()
                 correction = None
                 if vresult.label == "CONTRADICTED" and evidences:
                     corrected_text, explanation = await asyncio.to_thread(
@@ -83,6 +101,7 @@ async def run_verification(run_id: str):
                     )
                     correction = corrected_text
                     vresult.rationale = explanation
+                correction_times.append(time.time() - t0)
 
                 # Save claim result
                 cr = ClaimResult(
@@ -105,20 +124,36 @@ async def run_verification(run_id: str):
                 all_types.append(claim.claim_type)
 
             # 6. Trust score
+            t0 = time.time()
             trust = compute_trust_score(all_labels, all_weights, all_types)
+            perf_metrics["trust_score_sec"] = round(time.time() - t0, 3)
+            
+            # Aggregate timing stats
+            perf_metrics["avg_retrieval_sec"] = round(sum(retrieval_times) / len(retrieval_times), 3) if retrieval_times else 0
+            perf_metrics["avg_verification_sec"] = round(sum(verification_times) / len(verification_times), 3) if verification_times else 0
+            perf_metrics["avg_citation_sec"] = round(sum(citation_times) / len(citation_times), 3) if citation_times else 0
+            perf_metrics["avg_correction_sec"] = round(sum(correction_times) / len(correction_times), 3) if correction_times else 0
+            perf_metrics["total_retrieval_sec"] = round(sum(retrieval_times), 3)
+            perf_metrics["total_verification_sec"] = round(sum(verification_times), 3)
+            perf_metrics["total_sec"] = round(time.time() - start_time, 3)
+            perf_metrics["claims_count"] = len(claims)
+            
             run.trust_score = trust.overall
             run.faithfulness = trust.faithfulness
             run.groundedness = trust.groundedness
+            run.performance_metrics = perf_metrics
             run.status = "done"
             run.finished_at = dt.datetime.utcnow()
             await db.commit()
 
             log.info(
-                "Run %s done — %d claims, trust=%.1f, faith=%.1f, ground=%.1f",
+                "Run %s done — %d claims, trust=%.1f, faith=%.1f, ground=%.1f, time=%.2fs",
                 run_id, len(claims), trust.overall, trust.faithfulness, trust.groundedness,
+                perf_metrics["total_sec"],
             )
 
         except Exception as exc:
             log.exception("Verification run %s failed", run_id)
             run.status = "failed"
+            run.performance_metrics = perf_metrics
             await db.commit()

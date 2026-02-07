@@ -24,12 +24,17 @@ def generate_correction(claim_text: str,
         claim_nums = extract_numbers(claim_text)
         ev_nums = extract_numbers(ev_text)
         if claim_nums and ev_nums:
-            corrected = claim_text
-            for cn in claim_nums:
-                if cn not in ev_nums and ev_nums:
-                    corrected = corrected.replace(cn, ev_nums[0], 1)
+            # Find the first mismatched number
+            claim_num_clean = claim_nums[0].strip()
+            ev_num_clean = ev_nums[0].strip()
+            
+            # Use word boundaries to avoid partial replacements
+            import re as re_correction
+            pattern = re_correction.escape(claim_num_clean)
+            corrected = re_correction.sub(r'\b' + pattern + r'\b', ev_num_clean, claim_text, count=1)
+            
             explanation = (
-                f"Claim states '{claim_nums[0]}' but source says '{ev_nums[0]}' "
+                f"Claim states '{claim_num_clean}' but source says '{ev_num_clean}' "
                 f"({evidence.doc_name}, p.{evidence.page}, ¶{evidence.paragraph_id})."
             )
             return corrected, explanation

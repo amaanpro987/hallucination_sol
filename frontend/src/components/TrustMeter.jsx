@@ -2,13 +2,14 @@ import React from "react";
 import { trustColor } from "../utils/colors";
 
 /**
- * Top-bar trust meter + claim count badges.
+ * Top-bar trust meter + claim count badges + performance metrics.
  */
 export default function TrustMeter({ trust }) {
   if (!trust) return null;
 
   const pct = Math.round(trust.overall);
   const color = trustColor(trust.overall);
+  const perf = trust.performance_metrics;
 
   return (
     <div style={styles.bar}>
@@ -34,6 +35,11 @@ export default function TrustMeter({ trust }) {
         <span style={styles.sub}>
           Faith {Math.round(trust.faithfulness)}% · Ground {Math.round(trust.groundedness)}%
         </span>
+        {perf && (
+          <span style={styles.perf}>
+            ⏱️ {perf.total_sec}s ({perf.claims_count} claims)
+          </span>
+        )}
       </div>
 
       {/* ── Count badges ───────────────── */}
@@ -74,6 +80,7 @@ const styles = {
   labels: { display: "flex", flexDirection: "column", gap: 2 },
   title: { fontWeight: 600, fontSize: 14 },
   sub: { fontSize: 12, color: "var(--text-dim)" },
+  perf: { fontSize: 11, color: "var(--accent)", marginTop: 2 },
   badges: { display: "flex", gap: 10, marginLeft: "auto" },
   badge: {
     display: "flex", alignItems: "center", gap: 6,

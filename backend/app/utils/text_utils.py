@@ -21,8 +21,8 @@ def split_sentences(text: str) -> list[str]:
 # ── Number extractor ────────────────────────────────────────
 _NUM_RE = re.compile(
     r'(?:(?:[$€£¥])\s?)?'                   # optional currency
-    r'-?\d[\d,]*\.?\d*'                      # number
-    r'(?:\s?%|(?:\s?(?:mg|kg|ml|g|lb|oz|cm|mm|m|km|ft|in))\b)?',  # unit
+    r'-?\d+(?:[,\d]*)?(?:\.\d+)?'           # number with proper decimal handling
+    r'(?:\s?%|(?:\s?(?:mg|kg|ml|g|lb|oz|cm|mm|m|km|ft|in|million|billion|thousand))\b)?',  # unit
     re.IGNORECASE,
 )
 
@@ -47,10 +47,23 @@ def extract_dates(text: str) -> list[str]:
 
 # ── Normalise a numeric string to float ─────────────────────
 def normalise_number(s: str) -> float | None:
-    """Try to convert a numeric string to float."""
+    """Try to convert a numeric string to float, handling multipliers like million/billion."""
+    original = s
+    
+    # Check for multipliers
+    multiplier = 1.0
+    if re.search(r'\bmillion\b', s, re.I):
+        multiplier = 1_000_000
+    elif re.search(r'\bbillion\b', s, re.I):
+        multiplier = 1_000_000_000
+    elif re.search(r'\bthousand\b', s, re.I):
+        multiplier = 1_000
+    
+    # Remove currency, units, and multipliers
     cleaned = re.sub(r'[,$€£¥%]', '', s).strip()
-    cleaned = re.sub(r'\s*(mg|kg|ml|g|lb|oz|cm|mm|m|km|ft|in)\s*$', '', cleaned, flags=re.I).strip()
+    cleaned = re.sub(r'\s*(mg|kg|ml|g|lb|oz|cm|mm|m|km|ft|in|million|billion|thousand)\s*', '', cleaned, flags=re.I).strip()
+    
     try:
-        return float(cleaned)
+        return float(cleaned) * multiplier
     except ValueError:
         return None

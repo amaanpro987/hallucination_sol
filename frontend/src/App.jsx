@@ -6,6 +6,7 @@ import FilterBar from "./components/FilterBar";
 import OutputPanel from "./components/OutputPanel";
 import SourceViewer from "./components/SourceViewer";
 import EvidencePanel from "./components/EvidencePanel";
+import EvaluationDashboard from "./components/EvaluationDashboard";
 import "./App.css";
 
 /**
@@ -15,9 +16,10 @@ import "./App.css";
  *  1. Setup  — upload & ingest sources
  *  2. Verify — paste LLM text, run verification
  *  3. Review — split-pane results viewer
+ *  4. Evaluate — evaluation dashboard
  */
 export default function App() {
-  const [stage, setStage] = useState("setup"); // setup | verify | review
+  const [stage, setStage] = useState("setup"); // setup | verify | review | evaluate
   const [runData, setRunData] = useState(null);
   const [selectedClaimId, setSelectedClaimId] = useState(null);
   const [filter, setFilter] = useState("all");
@@ -52,13 +54,23 @@ export default function App() {
             <p>Upload trusted source documents, then verify LLM outputs against them.</p>
           </header>
           <UploadPanel onIngested={handleIngested} />
-          <button
-            className="skip-btn"
-            type="button"
-            onClick={() => setStage("verify")}
-          >
-            Skip — I already ingested sources →
-          </button>
+          <div style={{ display: "flex", gap: "12px", marginTop: "16px" }}>
+            <button
+              className="skip-btn"
+              type="button"
+              onClick={() => setStage("verify")}
+            >
+              Skip — I already ingested sources →
+            </button>
+            <button
+              className="skip-btn"
+              type="button"
+              onClick={() => setStage("evaluate")}
+              style={{ background: "var(--accent)" }}
+            >
+              📊 Evaluation Dashboard
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -75,14 +87,41 @@ export default function App() {
             <p>Paste the LLM-generated text below and click Verify.</p>
           </header>
           <VerifyForm onRunReady={handleRunReady} />
+          <div style={{ display: "flex", gap: "12px", marginTop: "16px" }}>
+            <button
+              className="skip-btn"
+              type="button"
+              onClick={() => setStage("setup")}
+            >
+              ← Back to upload
+            </button>
+            <button
+              className="skip-btn"
+              type="button"
+              onClick={() => setStage("evaluate")}
+              style={{ background: "var(--accent)" }}
+            >
+              📊 Evaluation Dashboard
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Evaluate stage ───────────────────────────────
+  if (stage === "evaluate") {
+    return (
+      <div>
+        <div style={styles.evalNav}>
           <button
-            className="skip-btn"
-            type="button"
+            style={styles.backBtn}
             onClick={() => setStage("setup")}
           >
-            ← Back to upload
+            ← Back to Home
           </button>
         </div>
+        <EvaluationDashboard />
       </div>
     );
   }
@@ -133,6 +172,34 @@ export default function App() {
       >
         + New Verification
       </button>
+      
+      {/* Evaluation button */}
+      <button
+        className="new-run-btn"
+        type="button"
+        onClick={() => setStage("evaluate")}
+        style={{ left: "auto", right: "20px", background: "var(--accent)" }}
+      >
+        📊 Evaluation
+      </button>
     </div>
   );
 }
+
+const styles = {
+  evalNav: {
+    padding: "12px 20px",
+    background: "var(--bg-panel)",
+    borderBottom: "1px solid var(--border)",
+  },
+  backBtn: {
+    padding: "8px 16px",
+    fontSize: 13,
+    fontWeight: 600,
+    background: "transparent",
+    color: "var(--text)",
+    border: "1px solid var(--border)",
+    borderRadius: "var(--radius)",
+    cursor: "pointer",
+  },
+};

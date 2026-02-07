@@ -49,7 +49,9 @@ def _get_embedder():
     global _embedder
     if _embedder is None:
         from sentence_transformers import SentenceTransformer
-        _embedder = SentenceTransformer(settings.EMBEDDING_MODEL)
+        log.info("Loading embedding model: %s", settings.EMBEDDING_MODEL)
+        _embedder = SentenceTransformer(settings.EMBEDDING_MODEL, device='cpu')
+        log.info("Model loaded successfully")
     return _embedder
 
 
@@ -119,7 +121,13 @@ def _build_indexes(chunks: list[dict]):
             import faiss
             embedder = _get_embedder()
             log.info("Encoding %d chunks …", len(texts))
-            vectors = embedder.encode(texts, show_progress_bar=True, convert_to_numpy=True)
+            # Use larger batch size and disable progress bar for faster processing
+            vectors = embedder.encode(
+                texts, 
+                batch_size=64,  # Increased from default 32
+                show_progress_bar=False,  # Disable for speed
+                convert_to_numpy=True
+            )
             vectors = vectors.astype("float32")
             dim = vectors.shape[1]
             index = faiss.IndexFlatIP(dim)

@@ -10,6 +10,7 @@ export default defineConfig({
       "/verify": "http://localhost:8000",
       "/runs": "http://localhost:8000",
       "/jobs": "http://localhost:8000",
+      "/evaluation": "http://localhost:8000",
       "/health": "http://localhost:8000",
     },
   },

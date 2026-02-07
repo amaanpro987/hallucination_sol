@@ -66,3 +66,24 @@ export function listRuns() {
 export function getRun(runId) {
   return request("GET", `/runs/${runId}`);
 }
+
+// ── Evaluation ─────────────────────────────────────────────
+export function startEvaluation(datasetPath = null, useSynthetic = true, maxSamples = null) {
+  return request("POST", "/evaluation/run", {
+    dataset_path: datasetPath,
+    use_synthetic: useSynthetic,
+    max_samples: maxSamples,
+  });
+}
+
+export function getEvaluationJob(jobId) {
+  return request("GET", `/evaluation/jobs/${jobId}`);
+}
+
+export function getEvaluationResults(jobId) {
+  return request("GET", `/evaluation/results/${jobId}`);
+}
+
+export function quickSyntheticEvaluation() {
+  return request("GET", "/evaluation/quick-synthetic");
+}

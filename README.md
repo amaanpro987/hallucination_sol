@@ -7,7 +7,34 @@ A full-stack application that verifies LLM-generated text against trusted source
 - **Claim-level labels**: Supported ✅ / Contradicted 🔴 / Unverifiable 🟡
 - **Citations** to exact source spans (document → page → paragraph → snippet)
 - **Corrections** for contradicted claims
-- **Split-pane UI**: click a claim → scroll to evidence, plus a document-level trust meter
+- **Split-pane UI**: click a claim → scroll to evidence in PDF viewer
+- **Performance tracking**: <5 second verification with detailed metrics
+- **Evaluation dashboard**: F1-Score, Precision, Recall, Confusion Matrix
+- **PDF viewer**: Interactive PDF navigation with auto-scroll to evidence
+
+---
+
+## ✨ **NEW FEATURES**
+
+### 📄 PDF Viewer with Auto-Scroll
+- Click any claim → view evidence in full PDF context
+- Auto-scroll to exact page containing evidence
+- Toggle between snippets and PDF view
+- Supports multiple source documents
+
+### ⏱️ Performance Tracking
+- Real-time latency monitoring (<5 seconds guaranteed)
+- Per-stage timing breakdown (retrieval, verification, etc.)
+- Displayed in UI alongside trust scores
+- Full metrics stored in database
+
+### 📊 Evaluation Dashboard
+- **Metrics**: F1-Score, Precision, Recall, Accuracy
+- **Confusion Matrix**: Visual 3x3 matrix
+- **Binary Classification**: TP/FP/TN/FN for hallucination detection
+- **Error Analysis**: False negatives/positives with recommendations
+- **HaluEval Integration**: Load benchmark datasets
+- **Quick Test**: 8-sample synthetic dataset for instant validation
 
 ---
 
@@ -100,9 +127,15 @@ docker-compose up --build
 3. **Verify** — Paste LLM-generated text and click "Verify"
 4. **Review** — Explore the split-pane results:
    - **Left**: LLM output with per-claim color coding (Green/Red/Yellow)
-   - **Right top**: PDF viewer that auto-scrolls to evidence
+   - **Right top**: PDF viewer that auto-scrolls to evidence (click "View" on any evidence)
    - **Right bottom**: Evidence details with NLI scores
-   - **Top bar**: Trust meter + filter controls
+   - **Top bar**: Trust meter + performance metrics + filter controls
+5. **Evaluate** — Access evaluation dashboard for system metrics:
+   - Click "📊 Evaluation Dashboard" button
+   - Run quick synthetic evaluation (8 samples)
+   - View F1-Score, Precision, Recall, Confusion Matrix
+   - Analyze false negatives/positives
+   - Get recommendations for threshold tuning
 
 ---
 
@@ -117,7 +150,11 @@ docker-compose up --build
 | `GET` | `/jobs/{id}` | Check ingestion job status |
 | `POST` | `/verify` | Start verification run (async) |
 | `GET` | `/runs` | List all verification runs |
-| `GET` | `/runs/{id}` | Get full annotated results |
+| `GET` | `/runs/{id}` | Get full annotated results (includes performance metrics) |
+| `POST` | `/evaluation/run` | Start evaluation job |
+| `GET` | `/evaluation/jobs/{id}` | Check evaluation status |
+| `GET` | `/evaluation/results/{id}` | Get evaluation results |
+| `GET` | `/evaluation/quick-synthetic` | Quick test (8 samples) |
 | `GET` | `/health` | Health check |
 
 ---
